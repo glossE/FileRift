@@ -1,9 +1,11 @@
- body{
+body{
    --bs-body-bg: black;
     font-family: Poppins,sans-serif;
     height: 100vh;
  }
- 
+ .main{
+   color:white;
+ }
  h1 {
     color:white;
     text-align: center;
@@ -15,6 +17,7 @@
    text-align: center;
 }
 
+
 .filechoose{
    display: flex;
    justify-content: center;
@@ -22,11 +25,27 @@
    flex-direction: column;
    padding-top: 50px;
 }
+input[type=file]{
+   color: white;
+   background-color: black;
+}
 .button{
    margin-left: 30px;
 }
 .info{
    color:wheat
+}
+.code{
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   align-items: center;
+}
+.text-center{
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   align-items: center;
 }
 .input-group{
    max-width: fit-content;
@@ -34,6 +53,29 @@
    justify-content:center ;
    align-items: center;
 }
+.clickBut{
+   border-radius: 5px   ;
+}
+.image{
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   align-items: center;
+}
+
+#toggle{
+   -webkit-appearance: none;
+   appearance: none;
+   height: 40px;
+   width: 75px;
+   background-color: #15181f;
+   position: absolute;
+   right: 0;
+   border-radius: 20px;
+   outline: none;
+   cursor: pointer;
+}
+
 @media (max-width: 680px) {
    body{
       background-color: black;
