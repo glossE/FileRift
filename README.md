@@ -1,7 +1,7 @@
 
 # FileRift 💥
 
-A peer to peer file sharing Web Application using WebRTC
+A peer to peer file sharing Web Application using WebRTC                   
 To use site click [here](https://glosse.github.io/FileRift/) !
 
 ## Features
