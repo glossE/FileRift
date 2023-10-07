@@ -29,23 +29,23 @@
             <img src="./filetransfer.gif" class="rounded" alt="..." id="image"/>
         </div>
         <div class="filechoose">
- <div class="code">
-    <h2>   
-      Generate Code
-    </h2> 
-    <p> 
+    <div class="code">
+        <h2>   
+         Generate Code
+        </h2> 
+        <p> 
           
-      <!-- min and max are 5 digit so-->        
-      Click on the button to generate random  
-      9 digit number 
-    </p> 
-    <button onclick="gfg();" class="clickBut"> 
-        Click Here 
-    </button> 
-    <p id="geeks"> 
-    </p> 
+         <!-- min and max are 5 digit so-->        
+            Click on the button to generate random  
+            9 digit number 
+        </p> 
+        <button onclick="gfg();" class="clickBut"> 
+            Click Here 
+        </button> 
+        <p id="geeks"> 
+        </p> 
     
-   </div>
+    </div>
             
             <div class="input-group mb-3">
                 <input type="file" class="form-control"  />
@@ -53,25 +53,7 @@
             </div>
         </div>  
     </div>
-    <script> 
-        var up = document.getElementById('GFG_UP'); 
-        var down = document.getElementById('geeks'); 
-        
-        
-        function gfg() { 
-            var minm = 100000000; 
-            var maxm = 999999999; 
-            down.innerHTML = Math.floor(Math 
-            .random() * (maxm - minm + 1)) + minm;
-            document.getElementById('geeks').style.fontSize = "x-large" 
-        } 
-        function gif(){
-            document.getElementById('image').style.display="flex";
-            document.getElementById('image').style.direction="column";
-            document.getElementById('image').style.justifyContent="center";
-            document.getElementById('image').style.alignItems="center";
-        }
-        
-    </script> 
+    
+    <script src="index.js"></script>
 </body>
 </html>
