@@ -27,5 +27,5 @@ Contributions are always welcome!
 
 
 
-![Logo](logo/logos.png)
+![Logo](assets/logo/logos.png)
 
