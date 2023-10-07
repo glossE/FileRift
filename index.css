@@ -1,22 +1,28 @@
 body{
    --bs-body-bg: black;
-    font-family: Poppins,sans-serif;
     height: 100vh;
  }
  .main{
    color:white;
+   font-family: 'Monoton';
  }
- h1 {
+ div h1 {
     color:white;
     text-align: center;
-    font-size: 3rem;
+    font-size: 5rem;
 
 }
 .intro{
    color:white;
    text-align: center;
+   font-size: 2rem;
 }
-
+.code h2{
+   font-size: 2rem;
+}
+.code p{
+   font-size: 1.5rem;
+}
 
 .filechoose{
    display: flex;
@@ -61,20 +67,10 @@ input[type=file]{
    flex-direction: column;
    justify-content: center;
    align-items: center;
+   border-radius: 20px;
 }
 
-#toggle{
-   -webkit-appearance: none;
-   appearance: none;
-   height: 40px;
-   width: 75px;
-   background-color: #15181f;
-   position: absolute;
-   right: 0;
-   border-radius: 20px;
-   outline: none;
-   cursor: pointer;
-}
+
 
 @media (max-width: 680px) {
    body{
