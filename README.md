@@ -2,7 +2,7 @@
 # FileRift 💥
 
 A peer to peer file sharing Web Application using WebRTC                   
-To use the site click [here](https://glosse.github.io/FileRift/){:target="_blank"} !
+To use the site click <a href="glossE.github.io/FileRift" target="_blank"> here </a> !
 
 ## Features
 - Cross platform
