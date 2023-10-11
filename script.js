@@ -18,12 +18,13 @@ function colorSwitch(){
     if(dnCheck.checked){
         document.querySelector('body').classList.add('dayNightSwitch');
         document.querySelector('.main').classList.add('fontColor');
+        document.querySelector('div h1').classList.add('h1blue');
         
     }
     else{
         document.querySelector('body').classList.remove("dayNightSwitch");
         document.querySelector('.main').classList.remove('fontColor');
-        
+        document.querySelector('h1').classList.remove('h1blue');
     }
 
 }

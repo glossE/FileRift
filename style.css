@@ -4,15 +4,20 @@ body{
     color:white;
  }
  .main{
-   color:white;
+   color:#7DFDFE;
    font-family: 'Monoton';
  }
  div h1 {
     
     text-align: center;
     font-size: 5rem;
+    color:#7DFDFE;
 
 }
+.h1blue{
+   color:navy;
+}
+
 .intro{
    text-align: center;
    font-size: 2rem;
