@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* global.css */
+
+body {
+    background-color: #1565C0; /* Lighter blue shade */
+    color: #FFFFFF; /* White text color for better contrast */
+    font-family: 'Roboto', sans-serif; /* Use Google Font Roboto for better readability */
+}
+
+/* Define a gradient background for the main container */
+.main {
+    background: linear-gradient(135deg, #0D3B76, #1A237E);
+    border: 10px solid #1616d9;
+    border-radius: 8px;
+    box-shadow: 4px 4px 6px rgb(255, 255, 255);
+    padding: 20px;
+}
+
+.card {
+    background-color: #0D3B76;
+    border: 5px solid #0D4F9B;
+    margin-bottom: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+    color: #FFFFFF; /* Title text color */
+    font-size: 32px; /* Title font size */
+    text-align: center; /* Center align the title */
+    margin-bottom: 20px; /* Add some bottom margin for spacing */
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3); /* Add refined text shadow */
+    background: linear-gradient(to right, #1872d8, #00B8D4); /* Add gradient background */
+    -webkit-background-clip: text; /* Clip text to gradient background */
+    -webkit-text-fill-color: transparent; /* Make text transparent to reveal gradient */
+    animation: glow 1.3s ease-in-out infinite alternate; /* Add subtle animation */
+}
+
+@keyframes glow {
+    from { text-shadow: 0 0 5px #FFFFFF, 0 0 10px #00B8D4; } /* Initial shadow */
+    to { text-shadow: 0 0 10px #FFFFFF, 0 0 15px #1565C0; } /* Final shadow */
+}
+
+
+
+.button {
+    margin-top: 18px;
+    font-size: 18px; /* Increase button font size for emphasis */
+    border-radius: 9999px; 
+    /* padding: 12px 24px; Increase button padding for better clickability */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add box shadow for depth */
+}
+
+.input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 4px;
+    border: 1px solid #CCCCCC;
+    background-color: #FFFFFF;
+    color: #333333;
+    transition: border-color 0.3s ease; /* Add transition effect for input */
+}
+
+.input:focus {
+    border-color: #1E88E5; /* Change border color when input is focused */
+    outline: none; /* Remove default focus outline */
+}
+
+.menu {
+    margin-bottom: 20px;
+}
+.upload-div{
+    width: 100%;
+}
+.upload-button {
+    margin-top: 16px; /* Maintain consistent top margin with other buttons */
+    font-size: 16px; /* Maintain consistent font size with other buttons */
+    border-radius: 8px; /* Adjust border radius */
+    /* padding: 10px 20px;    background-color: #1E88E5; Button background color */
+    color: #000000; /* Button text color */
+    border: none; /* Remove button border */
+    cursor: pointer; /* Change cursor to pointer on hover */
+    transition: background-color 0.3s ease; /* Add transition effect for button color */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add box shadow for depth */
+    width: calc(100% - 48px); 
+}
+
+.upload-button:hover {
+    background-color: #0F65C2; /* Darken button color on hover */
+}
