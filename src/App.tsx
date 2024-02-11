@@ -6,7 +6,7 @@ import { startPeer, stopPeerSession } from "./store/peer/peerActions";
 import * as connectionAction from "./store/connection/connectionActions"
 import { DataType, PeerConnection } from "./helpers/peer";
 import { useAsyncState } from "./helpers/hooks";
-
+import './global.css'
 const { Title } = Typography;
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -93,10 +93,10 @@ export const App: React.FC = () => {
     return (
         <Row justify={"center"} align={"top"}>
             <Col xs={24} sm={24} md={20} lg={16} xl={12}>
-                <Card>
-                    <Title level={2} style={{ textAlign: "center" }}>P2P File Transfer</Title>
+                <Card className="card">
+                    <Title level={2} style={{ textAlign: "center" }}  className="title">P2P File Transfer</Title>
                     <Card hidden={peer.started}>
-                        <Button onClick={handleStartSession} loading={peer.loading}>Start</Button>
+                        <Button className="button" onClick={handleStartSession} loading={peer.loading}>Start</Button>
                     </Card>
                     <Card hidden={!peer.started}>
                         <Space direction="horizontal">
@@ -106,8 +106,9 @@ export const App: React.FC = () => {
                                 message.info("Copied: " + peer.id)
                             }} />
                             <Button danger onClick={handleStopSession}>Stop</Button>
-                        </Space>
+                        </Space>   
                     </Card>
+                    <br />
                     <div hidden={!peer.started}>
                         <Card>
                             <Space direction="horizontal">
@@ -119,22 +120,23 @@ export const App: React.FC = () => {
                                     loading={connection.loading}>Connect</Button>
                             </Space>
                         </Card>
-
+                            <br />
                         <Card title="Connection">
                             {
                                 connection.list.length === 0
                                     ? <div>Waiting for connection ...</div>
                                     : <div>
                                         Select a connection
-                                        <Menu selectedKeys={connection.selectedId ? [connection.selectedId] : []}
+                                        <Menu className="menu" selectedKeys={connection.selectedId ? [connection.selectedId] : []}
                                             onSelect={(item) => dispatch(connectionAction.selectItem(item.key))}
                                             items={connection.list.map(e => getItem(e, e, null))} />
                                     </div>
                             }
 
                         </Card>
+                        <br />
                         <Card title="Send File">
-                            <Upload fileList={fileList}
+                            <Upload className="upload-button" fileList={fileList}
                                 maxCount={1}
                                 onRemove={() => setFileList([])}
                                 beforeUpload={(file) => {
@@ -143,6 +145,7 @@ export const App: React.FC = () => {
                                 }}>
                                 <Button icon={<UploadOutlined />}>Select File</Button>
                             </Upload>
+                            <br />
                             <Button
                                 type="primary"
                                 onClick={handleUpload}
