@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Card, Col, Input, Menu, MenuProps, message, Progress, Row, Space, Typography, Upload, UploadFile } from "antd";
+import { Button, Card, Col, Input, Menu, MenuProps, message, Row, Space, Typography, Upload, UploadFile } from "antd";
 import { CopyOutlined, UploadOutlined } from "@ant-design/icons";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { startPeer, stopPeerSession } from "./store/peer/peerActions";
@@ -47,10 +47,8 @@ export const App: React.FC = () => {
 
     const [fileList, setFileList] = useAsyncState([] as UploadFile[]);
     const [sendLoading, setSendLoading] = useAsyncState(false);
-    const [uploadProgress, setUploadProgress] = useState<number>(0);
-    const [downloadProgress, setDownloadProgress] = useState<number>(0);
+    const [uploadProgress, setUploadProgress] = useState(0); // State to track upload progress
 
-    // New handleUpload function
     const handleUpload = async () => {
         if (fileList.length === 0) {
             message.warning("Please select file");
@@ -60,35 +58,46 @@ export const App: React.FC = () => {
             message.warning("Please select a connection");
             return;
         }
+
         try {
             setSendLoading(true);
-            let file = fileList[0] as unknown as File;
-            let blob = new Blob([file], { type: file.type });
+            const file = fileList[0] as File;
+            const formData = new FormData();
+            formData.append('file', file);
 
-            let xhr = new XMLHttpRequest();
-            xhr.upload.addEventListener("progress", function(event) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `/api/send?to=${connection.selectedId}`, true);
+
+            xhr.upload.addEventListener('progress', (event) => {
                 if (event.lengthComputable) {
                     const progress = Math.round((event.loaded * 100) / event.total);
-                    setUploadProgress(progress);
+                    setUploadProgress(progress); // Update the progress state
                 }
             });
 
-            await PeerConnection.sendConnection(connection.selectedId, {
-                dataType: DataType.FILE,
-                file: blob,
-                fileName: file.name,
-                fileType: file.type
+            xhr.addEventListener('load', () => {
+                if (xhr.status === 200) {
+                    setSendLoading(false);
+                    setUploadProgress(100);
+                    message.info("File sent successfully");
+                } else {
+                    setSendLoading(false);
+                    message.error("Error sending file: " + xhr.statusText); // Improved error message
+                }
             });
 
-            setSendLoading(false);
-            setUploadProgress(100);
-            message.info("Send file successfully");
+            xhr.addEventListener('error', () => {
+                setSendLoading(false);
+                message.error("Error sending file: " + xhr.statusText); // Improved error message
+            });
+
+            xhr.send(formData);
         } catch (err) {
             setSendLoading(false);
-            console.log(err);
-            message.error("Error when sending file");
+            console.error(err);
+            message.error("Error sending file: "); // Improved error message
         }
-    }
+    };
 
     return (
         <Row justify={"center"} align={"top"}>
@@ -102,8 +111,8 @@ export const App: React.FC = () => {
                         <Space direction="horizontal">
                             <div>ID: {peer.id}</div>
                             <Button icon={<CopyOutlined />} onClick={async () => {
-                                await navigator.clipboard.writeText(peer.id || "")
-                                message.info("Copied: " + peer.id)
+                                await navigator.clipboard.writeText(peer.id || "");
+                                message.info("Copied: " + peer.id);
                             }} />
                             <Button danger onClick={handleStopSession}>Stop</Button>
                         </Space>
@@ -138,8 +147,8 @@ export const App: React.FC = () => {
                                 maxCount={1}
                                 onRemove={() => setFileList([])}
                                 beforeUpload={(file) => {
-                                    setFileList([file]);
-                                    return false;
+                                    setFileList([file])
+                                    return false
                                 }}>
                                 <Button icon={<UploadOutlined />}>Select File</Button>
                             </Upload>
@@ -152,15 +161,14 @@ export const App: React.FC = () => {
                             >
                                 {sendLoading ? 'Sending' : 'Send'}
                             </Button>
-                            <Progress percent={uploadProgress} status={sendLoading ? 'active' : 'success'} />
+                            {/* Display upload progress */}
+                            {uploadProgress > 0 && <div>Upload Progress: {uploadProgress}%</div>}
                         </Card>
                     </div>
                 </Card>
             </Col>
-
-
         </Row>
-    )
+    );
 }
 
 export default App;
