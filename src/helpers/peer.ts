@@ -7,6 +7,7 @@ export enum DataType {
 
 }
 export interface Data {
+    totalSize: number;
     dataType: DataType
     file?: Blob
     fileName?: string
@@ -110,21 +111,25 @@ export const PeerConnection = {
         }
         resolve()
     }),
-    onConnectionReceiveData: (id: string, callback: (f: Data) => void) => {
+    onConnectionReceiveData: (id: string, callback: (data: Data, progress: ProgressEvent<EventTarget> | null) => void) => {
         if (!peer) {
-            throw new Error("Peer doesn't start yet")
+            throw new Error("Peer doesn't start yet");
         }
         if (!connectionMap.has(id)) {
-            throw new Error("Connection didn't exist")
+            throw new Error("Connection didn't exist");
         }
-        let conn = connectionMap.get(id)
+        let conn = connectionMap.get(id);
         if (conn) {
-            conn.on('data', function (receivedData) {
-                console.log("Receiving data from " + id)
-                let data = receivedData as Data
-                callback(data)
-            })
+            conn.on('data', function (receivedData: unknown) {
+                // Use a type assertion to tell TypeScript that receivedData is of type Data
+                const data = receivedData as Data;
+                console.log("Receiving data from " + id);
+                // Assuming 'progress' is not part of the 'Data' type and needs to be handled separately
+                // You might need to adjust this part based on how you're tracking progress
+                // For example, if progress is tracked separately, you might not need to pass it to the callback
+                callback(data, null); // Pass null or a default ProgressEvent if progress is not applicable here
+            });
         }
     }
-
+    
 }
