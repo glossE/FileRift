@@ -48,7 +48,9 @@ export const App: React.FC = () => {
     const [fileList, setFileList] = useAsyncState([] as UploadFile[]);
     const [sendLoading, setSendLoading] = useAsyncState(false);
     const [uploadProgress, setUploadProgress] = useState(0); // State to track upload progress
+
     const [downloadProgress, setDownloadProgress] = useState(0); // State to track download progress
+
 
     const handleUpload = async () => {
         if (fileList.length === 0) {
@@ -100,6 +102,7 @@ export const App: React.FC = () => {
         }
     };
 
+
     const handleDownload = async (fileId: string) => {
         try {
             setDownloadProgress(0); // Reset progress
@@ -125,6 +128,7 @@ export const App: React.FC = () => {
             message.error("Error downloading file");
         }
     };
+
 
     return (
         <Row justify={"center"} align={"top"}>
@@ -191,6 +195,7 @@ export const App: React.FC = () => {
                             {/* Display upload progress */}
                             {uploadProgress > 0 && <div>Upload Progress: {uploadProgress}%</div>}
                         </Card>
+
                         <Card title="Download File">
                             <Button
                                 type="primary"
@@ -203,6 +208,7 @@ export const App: React.FC = () => {
                             {/* Display download progress */}
                             {downloadProgress > 0 && <div>Download Progress: {downloadProgress}%</div>}
                         </Card>
+
                     </div>
                 </Card>
             </Col>
