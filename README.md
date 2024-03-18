@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+# FileRift
+A peer to peer file sharing Web Application using WebRTC
+AB
+A peer to peer file sharing Web Application using WebRTC https://glosse.github.io/FileRift/
+=======
 
 # FileRift 💥
 
@@ -29,3 +35,4 @@ Contributions are always welcome!
 
 ![Logo](./assets/logo/logos.png)
 
+>>>>>>> aea4b005014641c24432d969d97d52bb15893596

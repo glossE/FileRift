@@ -49,6 +49,9 @@ export const App: React.FC = () => {
     const [sendLoading, setSendLoading] = useAsyncState(false);
     const [uploadProgress, setUploadProgress] = useState(0); // State to track upload progress
 
+    const [downloadProgress, setDownloadProgress] = useState(0); // State to track download progress
+
+
     const handleUpload = async () => {
         if (fileList.length === 0) {
             message.warning("Please select file");
@@ -98,6 +101,34 @@ export const App: React.FC = () => {
             message.error("Error sending file: "); // Improved error message
         }
     };
+
+
+    const handleDownload = async (fileId: string) => {
+        try {
+            setDownloadProgress(0); // Reset progress
+            const response = await fetch(`/api/download?fileId=${fileId}`);
+            const blob = await response.blob();
+            const reader = new FileReader();
+
+            reader.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const progress = Math.round((event.loaded * 100) / event.total);
+                    setDownloadProgress(progress); // Update the progress state
+                }
+            };
+
+            reader.onloadend = () => {
+                // Handle the downloaded file here
+                setDownloadProgress(100); // Complete progress
+            };
+
+            reader.readAsDataURL(blob);
+        } catch (err) {
+            console.error(err);
+            message.error("Error downloading file");
+        }
+    };
+
 
     return (
         <Row justify={"center"} align={"top"}>
@@ -164,6 +195,20 @@ export const App: React.FC = () => {
                             {/* Display upload progress */}
                             {uploadProgress > 0 && <div>Upload Progress: {uploadProgress}%</div>}
                         </Card>
+
+                        <Card title="Download File">
+                            <Button
+                                type="primary"
+                                onClick={() => handleDownload('exampleFileId')} // Replace 'exampleFileId' with actual file ID
+                                loading={downloadProgress < 100}
+                                style={{ marginTop: 16 }}
+                            >
+                                {downloadProgress < 100 ? 'Downloading' : 'Download'}
+                            </Button>
+                            {/* Display download progress */}
+                            {downloadProgress > 0 && <div>Download Progress: {downloadProgress}%</div>}
+                        </Card>
+
                     </div>
                 </Card>
             </Col>
