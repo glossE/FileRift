@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Button, Card, Col, Input, Menu, MenuProps, message, Row, Space, Typography, Upload, UploadFile } from "antd";
+import React, { useState, ReactElement } from 'react';
+import { Button, Card, Col, Input, Menu, MenuProps, message, Progress, Row, Space, Typography, Upload, UploadFile } from "antd";
 import { CopyOutlined, UploadOutlined } from "@ant-design/icons";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { startPeer, stopPeerSession } from "./store/peer/peerActions";
-import * as connectionAction from "./store/connection/connectionActions"
+import * as connectionAction from "./store/connection/connectionActions";
 import { DataType, PeerConnection } from "./helpers/peer";
 import { useAsyncState } from "./helpers/hooks";
 
@@ -26,28 +26,28 @@ function getItem(
     } as MenuItem;
 }
 
-export const App: React.FC = () => {
-
+export const App: React.FC = (): ReactElement => {
     const peer = useAppSelector((state) => state.peer);
     const connection = useAppSelector((state) => state.connection);
     const dispatch = useAppDispatch();
 
     const handleStartSession = () => {
         dispatch(startPeer());
-    }
+    };
 
     const handleStopSession = async () => {
         await PeerConnection.closePeerSession();
         dispatch(stopPeerSession());
-    }
+    };
 
     const handleConnectOtherPeer = () => {
         connection.id != null ? dispatch(connectionAction.connectPeer(connection.id || "")) : message.warning("Please enter ID");
-    }
+    };
 
     const [fileList, setFileList] = useAsyncState([] as UploadFile[]);
     const [sendLoading, setSendLoading] = useAsyncState(false);
-    const [uploadProgress, setUploadProgress] = useState(0); // State to track upload progress
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [downloadProgress, setDownloadProgress] = useState(0);
 
     const handleUpload = async () => {
         if (fileList.length === 0) {
@@ -58,44 +58,25 @@ export const App: React.FC = () => {
             message.warning("Please select a connection");
             return;
         }
-
         try {
-            setSendLoading(true);
-            const file = fileList[0] as File;
-            const formData = new FormData();
-            formData.append('file', file);
+            await setSendLoading(true);
+            let file = fileList[0] as unknown as File;
+            let blob = new Blob([file], { type: file.type });
 
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', `/api/send?to=${connection.selectedId}`, true);
-
-            xhr.upload.addEventListener('progress', (event) => {
-                if (event.lengthComputable) {
-                    const progress = Math.round((event.loaded * 100) / event.total);
-                    setUploadProgress(progress); // Update the progress state
-                }
-            });
-
-            xhr.addEventListener('load', () => {
-                if (xhr.status === 200) {
-                    setSendLoading(false);
-                    setUploadProgress(100);
-                    message.info("File sent successfully");
-                } else {
-                    setSendLoading(false);
-                    message.error("Error sending file: " + xhr.statusText); // Improved error message
-                }
-            });
-
-            xhr.addEventListener('error', () => {
-                setSendLoading(false);
-                message.error("Error sending file: " + xhr.statusText); // Improved error message
-            });
-
-            xhr.send(formData);
+            await PeerConnection.sendConnectionWithProgress(connection.selectedId, {
+                dataType: DataType.FILE,
+                file: blob,
+                fileName: file.name,
+                fileType: file.type
+            }, function (progress: React.SetStateAction<number>) {
+                    setUploadProgress(progress);
+                });
+            await setSendLoading(false);
+            message.info("Send file successfully");
         } catch (err) {
-            setSendLoading(false);
-            console.error(err);
-            message.error("Error sending file: "); // Improved error message
+            await setSendLoading(false);
+            console.log(err);
+            message.error("Error when sending file");
         }
     };
 
@@ -146,9 +127,9 @@ export const App: React.FC = () => {
                             <Upload fileList={fileList}
                                 maxCount={1}
                                 onRemove={() => setFileList([])}
-                                beforeUpload={(file) => {
-                                    setFileList([file])
-                                    return false
+                                beforeUpload={(file: any) => {
+                                    setFileList([file]);
+                                    return false;
                                 }}>
                                 <Button icon={<UploadOutlined />}>Select File</Button>
                             </Upload>
@@ -161,14 +142,16 @@ export const App: React.FC = () => {
                             >
                                 {sendLoading ? 'Sending' : 'Send'}
                             </Button>
-                            {/* Display upload progress */}
-                            {uploadProgress > 0 && <div>Upload Progress: {uploadProgress}%</div>}
                         </Card>
+                        <div>
+                            <Progress percent={uploadProgress} status="active" />
+                            <Progress percent={downloadProgress} status="active" />
+                        </div>
                     </div>
                 </Card>
             </Col>
         </Row>
     );
-}
+};
 
 export default App;

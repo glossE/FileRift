@@ -1,5 +1,6 @@
 import Peer, {DataConnection} from "peerjs";
-import {message} from "antd";
+import {MessageArgsProps, message} from "antd";
+import { ReactElement, JSXElementConstructor, ReactFragment, ReactPortal } from "react";
 
 export enum DataType {
     FILE = 'FILE',
@@ -7,26 +8,29 @@ export enum DataType {
 
 }
 export interface Data {
-    totalSize: number;
-    dataType: DataType
-    file?: Blob
-    fileName?: string
-    fileType?: string
-    message?: string
+    dataType: DataType;
+    file?: Blob; // Mark file as optional
+    fileName?: string;
+    fileType?: string;
+    message?: string;
+    chunkIndex?: number;
+    totalChunks?: number; // Mark totalChunks as optional
 }
 
+
 let peer: Peer | undefined
-let connectionMap: Map<string, DataConnection> = new Map<string, DataConnection>()
+let connectionMap: Map<string, DataConnection> = new Map<string, DataConnection>();
+
 
 export const PeerConnection = {
     getPeer: () => peer,
     startPeerSession: () => new Promise<string>((resolve, reject) => {
         try {
             peer = new Peer()
-            peer.on('open', (id) => {
+            peer.on('open', (id: string | PromiseLike<string>) => {
                 console.log('My ID: ' + id)
                 resolve(id)
-            }).on('error', (err) => {
+            }).on('error', (err: { message: string | number | boolean | ReactElement<any, string | JSXElementConstructor<any>> | ReactFragment | ReactPortal | MessageArgsProps | null | undefined; }) => {
                 console.log(err)
                 message.error(err.message)
             })
@@ -65,7 +69,7 @@ export const PeerConnection = {
                     console.log("Connect to: " + id)
                     connectionMap.set(id, conn)
                     resolve()
-                }).on('error', function(err) {
+                }).on('error', function(err: any) {
                     console.log(err)
                     reject(err)
                 })
@@ -75,10 +79,19 @@ export const PeerConnection = {
         }
     }),
     onIncomingConnection: (callback: (conn: DataConnection) => void) => {
-        peer?.on('connection', function (conn) {
-            console.log("Incoming connection: " + conn.peer)
-            connectionMap.set(conn.peer, conn)
-            callback(conn)
+        if (!peer) {
+            throw new Error("Peer doesn't start yet");
+        }
+        peer.on('connection', function (conn) {
+            peer = new Peer()
+            console.log("Incoming connection: " + conn.peer);
+            const dataConnection = peer.connect(conn.peer, { reliable: true });
+            if (dataConnection) {
+                connectionMap.set(conn.peer, dataConnection);
+                callback(dataConnection);
+            } else {
+                console.error("Failed to establish data connection with peer: " + conn.peer);
+            }
         });
     },
     onConnectionDisconnected: (id: string, callback: () => void) => {
@@ -99,19 +112,34 @@ export const PeerConnection = {
     },
     sendConnection: (id: string, data: Data): Promise<void> => new Promise((resolve, reject) => {
         if (!connectionMap.has(id)) {
-            reject(new Error("Connection didn't exist"))
-        }
-        try {
-            let conn = connectionMap.get(id);
-            if (conn) {
-                conn.send(data)
+            reject(new Error("Connection doesn't exist"));
+        } else {
+            const conn = connectionMap.get(id);
+            if (conn && conn.open) { // Check if the connection is open
+                try {
+                    conn.send(data);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            } else {
+                // Listen for the 'open' event and then send the data
+                const openListener = () => {
+                    try {
+                        conn?.send(data);
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    } finally {
+                        // Cleanup: remove the listener once data is sent
+                        conn?.off('open', openListener);
+                    }
+                };
+                conn?.on('open', openListener);
             }
-        } catch (err) {
-            reject(err)
         }
-        resolve()
     }),
-    onConnectionReceiveData: (id: string, callback: (data: Data, progress: ProgressEvent<EventTarget> | null) => void) => {
+    onConnectionReceiveData: (id: string, callback: (data: Data) => void) => {
         if (!peer) {
             throw new Error("Peer doesn't start yet");
         }
@@ -121,15 +149,99 @@ export const PeerConnection = {
         let conn = connectionMap.get(id);
         if (conn) {
             conn.on('data', function (receivedData: unknown) {
-                // Use a type assertion to tell TypeScript that receivedData is of type Data
-                const data = receivedData as Data;
                 console.log("Receiving data from " + id);
-                // Assuming 'progress' is not part of the 'Data' type and needs to be handled separately
-                // You might need to adjust this part based on how you're tracking progress
-                // For example, if progress is tracked separately, you might not need to pass it to the callback
-                callback(data, null); // Pass null or a default ProgressEvent if progress is not applicable here
+                let data = receivedData as Data;
+                callback(data);
             });
+        } else {
+            throw new Error("Connection with ID " + id + " not found");
+        }
+    },
+    sendFileInChunks: (id: string, file: File, onProgress: (progress: number) => void): Promise<void> => new Promise((resolve, reject) => {
+        if (!connectionMap.has(id)) {
+            reject(new Error("Connection didn't exist"));
+        }
+        try {
+            let conn = connectionMap.get(id);
+            if (conn) {
+                const chunkSize = 1024 * 1024; // 1MB chunks
+                const chunks = Math.ceil(file.size / chunkSize);
+                let sentBytes = 0;
+
+                const sendChunk = (chunkIndex: number) => {
+                    if (chunkIndex >= chunks) {
+                        resolve();
+                        return;
+                    }
+                    const start = chunkIndex * chunkSize;
+                    const end = Math.min(start + chunkSize, file.size);
+                    const chunk = file.slice(start, end);
+                    conn!.send({
+                        dataType: DataType.FILE,
+                        file: chunk,
+                        fileName: file.name,
+                        fileType: file.type,
+                        chunkIndex,
+                        totalChunks: chunks
+                    });
+                    sentBytes += chunk.size;
+                    onProgress(sentBytes / file.size * 100);
+                    sendChunk(chunkIndex + 1);
+                };
+
+                sendChunk(0);
+            }
+        } catch (err) {
+            reject(err);
+        }
+    }),
+
+    sendConnectionWithProgress: (id: string, data: Data, onProgress: (progress: number) => void): Promise<void> => new Promise((resolve, reject) => {
+        if (!connectionMap.has(id)) {
+            reject(new Error("Connection didn't exist"));
+        }
+        try {
+            let conn = connectionMap.get(id);
+            if (conn) {
+                // Assuming conn.send supports progress tracking, which might need adjustment based on the actual implementation
+                conn.on('error', (error) => {
+                    reject(error);
+                });
+                conn.send(data);    
+                onProgress(100); // Placeholder for progress update
+                resolve();
+            }
+        } catch (err) {
+            reject(err);
+        }
+    }),
+
+    // Modify the onConnectionReceiveData method to handle chunked data
+    onConnectionReceiveDataWithProgress: (id: string, callback: (data: Data, progress: number) => void) => {
+        if (!peer) {
+            throw new Error("Peer doesn't start yet");
+        }
+        if (!connectionMap.has(id)) {
+            throw new Error("Connection didn't exist");
+        }
+        let conn = connectionMap.get(id);
+        if (conn) {
+            let receivedBytes = 0;
+            conn.on('data', function (receivedData: unknown) {
+                let data = receivedData as Data;
+                if (data.dataType === DataType.FILE) {
+                    const chunkSize = 1024 * 1024;
+                    // Safely access file and totalChunks with optional chaining and provide default values
+                    const fileSize = data.file?.size ?? 0;
+                    const totalChunks = data.totalChunks ?? 1; // Assuming at least one chunk if totalChunks is undefined
+                    receivedBytes += fileSize;
+                    const totalSize = totalChunks * chunkSize; // Assuming chunkSize is known
+                    const progress = receivedBytes / totalSize * 100;
+                    callback(data, progress);
+                }
+            });
+        } else {
+            throw new Error("Connection with ID " + id + " not found");
         }
     }
-    
-}
+};
