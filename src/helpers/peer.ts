@@ -196,25 +196,45 @@ export const PeerConnection = {
         }
     }),
 
-    sendConnectionWithProgress: (id: string, data: Data, onProgress: (progress: number) => void): Promise<void> => new Promise((resolve, reject) => {
-        if (!connectionMap.has(id)) {
-            reject(new Error("Connection didn't exist"));
-        }
-        try {
-            let conn = connectionMap.get(id);
-            if (conn) {
-                // Assuming conn.send supports progress tracking, which might need adjustment based on the actual implementation
-                conn.on('error', (error) => {
-                    reject(error);
-                });
-                conn.send(data);    
-                onProgress(100); // Placeholder for progress update
-                resolve();
+    sendConnectionWithProgress: (
+        id: string,
+        data: Data,
+        onProgress: (progress: number) => void
+    ): Promise<void> =>
+        new Promise((resolve, reject) => {
+            if (!connectionMap.has(id)) {
+                reject(new Error("Connection doesn't exist"));
+                return;
             }
-        } catch (err) {
-            reject(err);
-        }
-    }),
+            try {
+                let conn = connectionMap.get(id);
+                if (!conn || !conn.open) {
+                    // If connection is not open, wait for the 'open' event
+                    const openListener = () => {
+                        try {
+                            conn?.send(data);
+                            resolve();
+                        } catch (error) {
+                            reject(error);
+                        } finally {
+                            // Cleanup: remove the listener once data is sent
+                            conn?.off("open", openListener);
+                        }
+                    };
+                    conn?.on("open", openListener);
+                } else {
+                    // If connection is already open, send data immediately
+                    conn.send(data);
+                    resolve();
+                }
+    
+                // Assuming conn.send supports progress tracking
+                onProgress(100); // Placeholder for progress update
+            } catch (err) {
+                reject(err);
+            }
+        }),
+    
 
     // Modify the onConnectionReceiveData method to handle chunked data
     onConnectionReceiveDataWithProgress: (id: string, callback: (data: Data, progress: number) => void) => {
