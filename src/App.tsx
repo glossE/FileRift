@@ -62,7 +62,7 @@ export const App: React.FC = (): ReactElement => {
             await setSendLoading(true);
             let file = fileList[0] as unknown as File;
             let blob = new Blob([file], { type: file.type });
-
+            /*
             await PeerConnection.sendConnectionWithProgress(connection.selectedId, {
                 dataType: DataType.FILE,
                 file: blob,
@@ -70,7 +70,7 @@ export const App: React.FC = (): ReactElement => {
                 fileType: file.type
             }, function (progress: React.SetStateAction<number>) {
                     setUploadProgress(progress);
-                });
+                });*/
             await setSendLoading(false);
             message.info("Send file successfully");
         } catch (err) {

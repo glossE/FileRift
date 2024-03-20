@@ -195,7 +195,7 @@ export const PeerConnection = {
             reject(err);
         }
     }),
-
+/*
     sendConnectionWithProgress: (
         id: string,
         data: Data,
@@ -264,4 +264,6 @@ export const PeerConnection = {
             throw new Error("Connection with ID " + id + " not found");
         }
     }
+    */
 };
+
