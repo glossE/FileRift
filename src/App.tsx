@@ -1,7 +1,7 @@
 // App.tsx
 
 import React, { useState } from 'react';
-import { Button, Card, Col, Input, Menu, message, Progress, Row, Space, Spin, Typography, Upload, UploadFile } from "antd";
+import { Button, Card, Col, Input, Menu, message, Progress, Row, Space, Typography, Upload, UploadFile } from "antd";
 import { CopyOutlined, UploadOutlined } from "@ant-design/icons";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { startPeer, stopPeerSession } from "./store/peer/peerActions";
@@ -43,24 +43,21 @@ export const App: React.FC = () => {
             return;
         }
         try {
-            await setSendLoading(true);
-            // Assuming fileList[0] is a File object
+            setSendLoading(true);
             let file = fileList[0];
             if (!file) {
                 throw new Error("File is undefined");
             }
-            let blob = new Blob([file], {type: file.type});
     
-            await PeerConnection.sendConnection(connection.selectedId, {
-                dataType: DataType.FILE,
-                file: blob,
-                fileName: file.name,
-                fileType: file.type
+            // Use sendFileInChunks
+            await PeerConnection.sendFileInChunks(connection.selectedId, file, (progress) => {
+                setSendProgress(progress);
             });
-            await setSendLoading(false);
+    
+            setSendLoading(false);
             message.info("Send file successfully");
         } catch (err) {
-            await setSendLoading(false);
+            setSendLoading(false);
             console.log(err);
             message.error("Error when sending file");
         }
@@ -143,30 +140,7 @@ export const App: React.FC = () => {
                                 {sendLoading ? 'Sending' : 'Send'}
                             </Button>
                         </Card>
-                        <Card title="Send File">
-    <Upload fileList={fileList}
-        maxCount={1}
-        onRemove={() => setFileList([])}
-        beforeUpload={(file) => {
-            setFileList([file]);
-            return false;
-        }}>
-        <Button icon={<UploadOutlined />}>Select File</Button>
-    </Upload>
-    {/* Conditionally render the spinner based on sendLoading */}
-    {sendLoading && <Spin />}
-    <Progress percent={sendProgress} status={sendLoading ? 'active' : undefined} />
-    <Button
-        type="primary"
-        onClick={handleUpload}
-        disabled={fileList.length === 0}
-        loading={sendLoading}
-        style={{ marginTop: 16 }}
-    >
-        {sendLoading ? 'Sending' : 'Send'}
-    </Button>
-</Card>
-
+                        
                     </div>
                 </Card>
             </Col>
