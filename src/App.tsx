@@ -92,7 +92,7 @@ export const App: React.FC = () => {
                                     loading={connection.loading}>Connect</Button>
                             </Space>
                         </Card>
-
+    
                         <Card title="Connection">
                             {
                                 connection.list.length === 0
@@ -101,10 +101,14 @@ export const App: React.FC = () => {
                                         Select a connection
                                         <Menu selectedKeys={connection.selectedId ? [connection.selectedId] : []}
                                             onSelect={(item) => dispatch(connectionAction.selectItem(item.key))}
-                                            items={connection.list.map(e => getItem(e, e, null))} />
+                                        >
+                                            {connection.list.map((item) => (
+                                                <Menu.Item key={item}>{item}</Menu.Item>
+                                            ))}
+                                        </Menu>
                                     </div>
                             }
-
+    
                         </Card>
                         <Card title="Send File">
                             <Upload fileList={fileList}
@@ -132,6 +136,7 @@ export const App: React.FC = () => {
             </Col>
         </Row>
     )
+    
 }
 
 export default App;
