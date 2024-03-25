@@ -1,12 +1,12 @@
 {
   "files": {
-    "main.js": "/FileRift/static/js/main.a2849b27.js",
+    "main.js": "/FileRift/static/js/main.cadeb5ba.js",
     "static/js/787.a08f7292.chunk.js": "/FileRift/static/js/787.a08f7292.chunk.js",
     "index.html": "/FileRift/index.html",
-    "main.a2849b27.js.map": "/FileRift/static/js/main.a2849b27.js.map",
+    "main.cadeb5ba.js.map": "/FileRift/static/js/main.cadeb5ba.js.map",
     "787.a08f7292.chunk.js.map": "/FileRift/static/js/787.a08f7292.chunk.js.map"
   },
   "entrypoints": [
-    "static/js/main.a2849b27.js"
+    "static/js/main.cadeb5ba.js"
   ]
 }
