@@ -10,6 +10,7 @@ import { DataType, PeerConnection } from "./helpers/peer";
 import { useAsyncState } from "./helpers/hooks";
 
 const { Title } = Typography;
+type ProgressCallback = (progress: number) => void;
 
 export const App: React.FC = () => {
     const peer = useAppSelector((state) => state.peer);
@@ -54,9 +55,9 @@ export const App: React.FC = () => {
         }
     };
 
-    const handleProgressUpdate = (progress: number) => {
+    const handleProgressUpdate: ProgressCallback = (progress) => {
         setSendProgress(progress);
-    }
+    };
 
     function getItem(e: string, e1: string, arg2: null): any {
         throw new Error('Function not implemented.');
