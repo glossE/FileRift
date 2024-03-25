@@ -124,90 +124,61 @@ export const PeerConnection = {
     }),
     onConnectionReceiveData: (id: string, callback: (f: Data) => void) => {
         if (!peer) {
-            throw new Error("Peer doesn't start yet");
+            throw new Error("Peer doesn't start yet")
         }
         if (!connectionMap.has(id)) {
-            throw new Error("Connection didn't exist");
+            throw new Error("Connection didn't exist")
         }
-        let conn = connectionMap.get(id);
+        let conn = connectionMap.get(id)
         if (conn) {
             conn.on('data', function (receivedData) {
-                console.log("Receiving data from " + id);
-                let data = receivedData as Data;
-    
-                // Check if the received data is a file chunk
-                if (data.dataType === DataType.FILE && data.file) {
-                    // Assuming the file size is sent along with the first chunk
-                    if (!receivedChunksMap.has(id)) {
-                        receivedChunksMap.set(id, { chunks: [], totalSize: data.file.size });
-                    }
-                    const fileChunks = receivedChunksMap.get(id);
-                    if (fileChunks) {
-                        // Convert the Blob to an ArrayBuffer
-                        const reader = new FileReader();
-                        reader.onload = function(event) {
-                            if (event.target && event.target.result) {
-                                fileChunks.chunks.push(event.target.result as ArrayBuffer);
-                                // Check if all chunks have been received
-                                if (fileChunks.chunks.reduce((acc, chunk) => acc + chunk.byteLength, 0) === fileChunks.totalSize) {
-                                    // Reconstruct the file
-                                    const fileBlob = new Blob(fileChunks.chunks);
-                                    // Handle the reconstructed file (e.g., download it)
-                                    // This is a simplified example; you might want to trigger a download or handle the file differently
-                                    console.log("File reconstructed:", fileBlob);
-                                    // Clear the received chunks for this connection
-                                    receivedChunksMap.delete(id);
-                                }
-                            }
-                        };
-                        reader.readAsArrayBuffer(data.file);
-                    }
-                } else {
-                    // Handle other types of data
-                    callback(data);
-                }
-            });
+                console.log("Receiving data from " + id)
+                let data = receivedData as Data
+                callback(data)
+            })
         }
     },
     sendFileInChunks: async (id: string, file: File | undefined, progressCallback: (progress: number) => void): Promise<void> => {
-    if (!file) {
-        throw new Error("File is undefined");
-    }
-
-    const connection = connectionMap.get(id);
-    if (!connection) {
-        throw new Error("Connection does not exist");
-    }
-
-    const chunkSize = 16384;
-    let offset = 0;
-
-    const readSlice = (o: number) => {
-        const slice = file.slice(offset, o + chunkSize);
-        const reader = new FileReader();
-
-        reader.onload = (event) => {
-            if (!event || !event.target || !(event.target instanceof FileReader)) {
-                throw new Error("Failed to read file slice");
-            }
-
-            const arrayBuffer = event.target.result as ArrayBuffer;
-            connection.send(arrayBuffer);
-            offset += arrayBuffer.byteLength;
-
-            const progress = Math.min(100, Math.round((offset / file.size) * 100));
-            progressCallback(progress);
-
-            if (offset < file.size) {
-                readSlice(offset);
-            }
+        if (!file) {
+            throw new Error("File is undefined");
+        }
+    
+        const connection = connectionMap.get(id);
+        if (!connection) {
+            throw new Error("Connection does not exist");
+        }
+    
+        const chunkSize = 16384;
+        let offset = 0;
+        const totalChunks = Math.ceil(file.size / chunkSize);
+    
+        const sendChunk = (chunkIndex: number) => {
+            const slice = file.slice(offset, offset + chunkSize);
+            const reader = new FileReader();
+    
+            reader.onload = (event) => {
+                if (!event || !event.target || !(event.target instanceof FileReader)) {
+                    throw new Error("Failed to read file slice");
+                }
+    
+                const arrayBuffer = event.target.result as ArrayBuffer;
+                connection.send({ chunkIndex, totalChunks, data: arrayBuffer });
+                offset += arrayBuffer.byteLength;
+    
+                const progress = Math.min(100, Math.round((offset / file.size) * 100));
+                progressCallback(progress);
+    
+                if (offset < file.size) {
+                    sendChunk(chunkIndex + 1);
+                }
+            };
+    
+            reader.readAsArrayBuffer(slice);
         };
-
-        reader.readAsArrayBuffer(slice);
-    };
-
-    readSlice(0);
-}
+    
+        sendChunk(0);
+    }
+    
 
     
     

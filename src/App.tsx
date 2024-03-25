@@ -44,14 +44,20 @@ export const App: React.FC = () => {
         }
         try {
             setSendLoading(true);
-            let file = fileList[0];
-            if (!file) {
-                throw new Error("File is undefined");
-            }
+            let file = fileList[0]; // Ensure fileList is typed to contain File objects
+            let blob = new Blob([file], {type: file.type});
     
-            // Use sendFileInChunks
+            // Step 1: Use sendFileInChunks to show progress of the upload
             await PeerConnection.sendFileInChunks(connection.selectedId, file, (progress) => {
                 setSendProgress(progress);
+            });
+    
+            // Step 2: Use sendConnection to send the actual data to the other peer
+            await PeerConnection.sendConnection(connection.selectedId, {
+                dataType: DataType.FILE,
+                file: blob,
+                fileName: file.name,
+                fileType: file.type
             });
     
             setSendLoading(false);
@@ -62,6 +68,7 @@ export const App: React.FC = () => {
             message.error("Error when sending file");
         }
     };
+    
     
     
     const handleProgressUpdate: ProgressCallback = (progress) => {
