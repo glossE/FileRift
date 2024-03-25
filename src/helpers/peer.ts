@@ -138,7 +138,11 @@ export const PeerConnection = {
             })
         }
     },
-    sendFileInChunks: async (id: string, file: File, progressCallback: (progress: number) => void): Promise<void> => {
+    sendFileInChunks: async (id: string, file: File | undefined, progressCallback: (progress: number) => void): Promise<void> => {
+        if (!file) {
+            throw new Error("File is undefined");
+        }
+    
         const connection = connectionMap.get(id);
         if (!connection) {
             throw new Error("Connection does not exist");
@@ -148,9 +152,6 @@ export const PeerConnection = {
         let offset = 0;
     
         const readSlice = (o: number) => {
-            if (!file) {
-                throw new Error("File is undefined");
-            }
             const slice = file.slice(offset, o + chunkSize);
             const reader = new FileReader();
     
@@ -176,5 +177,6 @@ export const PeerConnection = {
     
         readSlice(0);
     }
+    
     
 }
