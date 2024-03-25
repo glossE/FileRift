@@ -139,45 +139,45 @@ export const PeerConnection = {
         }
     },
     sendFileInChunks: async (id: string, file: File | undefined, progressCallback: (progress: number) => void): Promise<void> => {
-        if (!file) {
-            throw new Error("File is undefined");
-        }
-    
-        const connection = connectionMap.get(id);
-        if (!connection) {
-            throw new Error("Connection does not exist");
-        }
-    
-        const chunkSize = 16384;
-        let offset = 0;
-    
-        const readSlice = (o: number) => {
-            const slice = file.slice(offset, o + chunkSize);
-            const reader = new FileReader();
-    
-            reader.onload = (event) => {
-                if (!event || !event.target || !(event.target instanceof FileReader)) {
-                    throw new Error("Failed to read file slice");
-                }
-    
-                const arrayBuffer = event.target.result as ArrayBuffer;
-                connection.send(arrayBuffer);
-                offset += arrayBuffer.byteLength;
-    
-                const progress = Math.min(100, Math.round((offset / file.size) * 100));
-                progressCallback(progress);
-    
-                if (offset < file.size) {
-                    readSlice(offset);
-                }
-            };
-    
-            reader.readAsArrayBuffer(slice);
-        };
-    
-        readSlice(0);
+    if (!file) {
+        throw new Error("File is undefined");
     }
-    
+
+    const connection = connectionMap.get(id);
+    if (!connection) {
+        throw new Error("Connection does not exist");
+    }
+
+    const chunkSize = 16384;
+    let offset = 0;
+
+    const readSlice = (o: number) => {
+        const slice = file.slice(offset, o + chunkSize);
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+            if (!event || !event.target || !(event.target instanceof FileReader)) {
+                throw new Error("Failed to read file slice");
+            }
+
+            const arrayBuffer = event.target.result as ArrayBuffer;
+            connection.send(arrayBuffer);
+            offset += arrayBuffer.byteLength;
+
+            const progress = Math.min(100, Math.round((offset / file.size) * 100));
+            progressCallback(progress);
+
+            if (offset < file.size) {
+                readSlice(offset);
+            }
+        };
+
+        reader.readAsArrayBuffer(slice);
+    };
+
+    readSlice(0);
+}
+
     
     
 }

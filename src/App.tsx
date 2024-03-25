@@ -35,7 +35,7 @@ export const App: React.FC = () => {
 
     const handleUpload = async () => {
         if (fileList.length === 0) {
-            message.warning("Please select a file");
+            message.warning("Please select file");
             return;
         }
         if (!connection.selectedId) {
@@ -43,18 +43,30 @@ export const App: React.FC = () => {
             return;
         }
         try {
-            setSendLoading(true);
-            const file = fileList[0].originFileObj as File;
-            await PeerConnection.sendFileInChunks(connection.selectedId, file, handleProgressUpdate);
-            setSendLoading(false);
-            message.info("File sent successfully");
+            await setSendLoading(true);
+            // Assuming fileList[0] is a File object
+            let file = fileList[0];
+            if (!file) {
+                throw new Error("File is undefined");
+            }
+            let blob = new Blob([file], {type: file.type});
+    
+            await PeerConnection.sendConnection(connection.selectedId, {
+                dataType: DataType.FILE,
+                file: blob,
+                fileName: file.name,
+                fileType: file.type
+            });
+            await setSendLoading(false);
+            message.info("Send file successfully");
         } catch (err) {
-            setSendLoading(false);
+            await setSendLoading(false);
             console.log(err);
             message.error("Error when sending file");
         }
     };
-
+    
+    
     const handleProgressUpdate: ProgressCallback = (progress) => {
         setSendProgress(progress);
     };
