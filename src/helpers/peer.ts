@@ -148,7 +148,7 @@ export const PeerConnection = {
             throw new Error("Connection does not exist");
         }
     
-        const chunkSize = 16384;
+        const chunkSize = 64 * 1024;
         let offset = 0;
         const totalChunks = Math.ceil(file.size / chunkSize);
     
