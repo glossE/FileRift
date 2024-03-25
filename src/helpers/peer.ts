@@ -5,7 +5,7 @@ import { message } from "antd";
 
 
 type ProgressCallback = (progress: number) => void;
-
+const receivedChunksMap = new Map<string, { chunks: ArrayBuffer[], totalSize: number }>();
 export enum DataType {
     FILE = 'FILE',
     OTHER = 'OTHER'
@@ -124,18 +124,49 @@ export const PeerConnection = {
     }),
     onConnectionReceiveData: (id: string, callback: (f: Data) => void) => {
         if (!peer) {
-            throw new Error("Peer doesn't start yet")
+            throw new Error("Peer doesn't start yet");
         }
         if (!connectionMap.has(id)) {
-            throw new Error("Connection didn't exist")
+            throw new Error("Connection didn't exist");
         }
-        let conn = connectionMap.get(id)
+        let conn = connectionMap.get(id);
         if (conn) {
             conn.on('data', function (receivedData) {
-                console.log("Receiving data from " + id)
-                let data = receivedData as Data
-                callback(data)
-            })
+                console.log("Receiving data from " + id);
+                let data = receivedData as Data;
+    
+                // Check if the received data is a file chunk
+                if (data.dataType === DataType.FILE && data.file) {
+                    // Assuming the file size is sent along with the first chunk
+                    if (!receivedChunksMap.has(id)) {
+                        receivedChunksMap.set(id, { chunks: [], totalSize: data.file.size });
+                    }
+                    const fileChunks = receivedChunksMap.get(id);
+                    if (fileChunks) {
+                        // Convert the Blob to an ArrayBuffer
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            if (event.target && event.target.result) {
+                                fileChunks.chunks.push(event.target.result as ArrayBuffer);
+                                // Check if all chunks have been received
+                                if (fileChunks.chunks.reduce((acc, chunk) => acc + chunk.byteLength, 0) === fileChunks.totalSize) {
+                                    // Reconstruct the file
+                                    const fileBlob = new Blob(fileChunks.chunks);
+                                    // Handle the reconstructed file (e.g., download it)
+                                    // This is a simplified example; you might want to trigger a download or handle the file differently
+                                    console.log("File reconstructed:", fileBlob);
+                                    // Clear the received chunks for this connection
+                                    receivedChunksMap.delete(id);
+                                }
+                            }
+                        };
+                        reader.readAsArrayBuffer(data.file);
+                    }
+                } else {
+                    // Handle other types of data
+                    callback(data);
+                }
+            });
         }
     },
     sendFileInChunks: async (id: string, file: File | undefined, progressCallback: (progress: number) => void): Promise<void> => {
