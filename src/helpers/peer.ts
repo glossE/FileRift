@@ -138,39 +138,43 @@ export const PeerConnection = {
             })
         }
     },
-    sendFileInChunks: async (id: string, file: File, progressCallback: ProgressCallback): Promise<void> => {
+    sendFileInChunks: async (id: string, file: File, progressCallback: (progress: number) => void): Promise<void> => {
         const connection = connectionMap.get(id);
         if (!connection) {
             throw new Error("Connection does not exist");
         }
-
+    
         const chunkSize = 16384;
         let offset = 0;
-
+    
         const readSlice = (o: number) => {
+            if (!file) {
+                throw new Error("File is undefined");
+            }
             const slice = file.slice(offset, o + chunkSize);
             const reader = new FileReader();
-
+    
             reader.onload = (event) => {
-                if (!event.target || !(event.target instanceof FileReader)) {
+                if (!event || !event.target || !(event.target instanceof FileReader)) {
                     throw new Error("Failed to read file slice");
                 }
-
+    
                 const arrayBuffer = event.target.result as ArrayBuffer;
                 connection.send(arrayBuffer);
                 offset += arrayBuffer.byteLength;
-
+    
                 const progress = Math.min(100, Math.round((offset / file.size) * 100));
                 progressCallback(progress);
-
+    
                 if (offset < file.size) {
                     readSlice(offset);
                 }
             };
-
+    
             reader.readAsArrayBuffer(slice);
         };
-
+    
         readSlice(0);
     }
+    
 }
