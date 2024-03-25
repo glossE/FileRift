@@ -1,57 +1,40 @@
-import React, { useState, ReactElement } from 'react';
-import { Button, Card, Col, Input, Menu, MenuProps, message, Progress, Row, Space, Typography, Upload, UploadFile } from "antd";
+// App.tsx
+
+import React, { useState } from 'react';
+import { Button, Card, Col, Input, Menu, message, Progress, Row, Space, Typography, Upload, UploadFile } from "antd";
 import { CopyOutlined, UploadOutlined } from "@ant-design/icons";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { startPeer, stopPeerSession } from "./store/peer/peerActions";
-import * as connectionAction from "./store/connection/connectionActions";
+import * as connectionAction from "./store/connection/connectionActions"
 import { DataType, PeerConnection } from "./helpers/peer";
 import { useAsyncState } from "./helpers/hooks";
 
 const { Title } = Typography;
-type MenuItem = Required<MenuProps>['items'][number];
 
-function getItem(
-    label: React.ReactNode,
-    key: React.Key,
-    icon?: React.ReactNode,
-    children?: MenuItem[],
-    type?: 'group',
-): MenuItem {
-    return {
-        key,
-        icon,
-        children,
-        label,
-        type,
-    } as MenuItem;
-}
-
-export const App: React.FC = (): ReactElement => {
+export const App: React.FC = () => {
     const peer = useAppSelector((state) => state.peer);
     const connection = useAppSelector((state) => state.connection);
     const dispatch = useAppDispatch();
+    const [fileList, setFileList] = useAsyncState([] as UploadFile[]);
+    const [sendLoading, setSendLoading] = useState<boolean>(false);
+    const [sendProgress, setSendProgress] = useState<number>(0);
 
     const handleStartSession = () => {
         dispatch(startPeer());
-    };
+    }
 
     const handleStopSession = async () => {
         await PeerConnection.closePeerSession();
         dispatch(stopPeerSession());
-    };
+    }
 
     const handleConnectOtherPeer = () => {
         connection.id != null ? dispatch(connectionAction.connectPeer(connection.id || "")) : message.warning("Please enter ID");
-    };
-
-    const [fileList, setFileList] = useAsyncState([] as UploadFile[]);
-    const [sendLoading, setSendLoading] = useAsyncState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
-    const [downloadProgress, setDownloadProgress] = useState(0);
+    }
 
     const handleUpload = async () => {
         if (fileList.length === 0) {
-            message.warning("Please select file");
+            message.warning("Please select a file");
             return;
         }
         if (!connection.selectedId) {
@@ -59,26 +42,25 @@ export const App: React.FC = (): ReactElement => {
             return;
         }
         try {
-            await setSendLoading(true);
-            let file = fileList[0] as unknown as File;
-            let blob = new Blob([file], { type: file.type });
-            /*
-            await PeerConnection.sendConnectionWithProgress(connection.selectedId, {
-                dataType: DataType.FILE,
-                file: blob,
-                fileName: file.name,
-                fileType: file.type
-            }, function (progress: React.SetStateAction<number>) {
-                    setUploadProgress(progress);
-                });*/
-            await setSendLoading(false);
-            message.info("Send file successfully");
+            setSendLoading(true);
+            const file = fileList[0].originFileObj as File;
+            await PeerConnection.sendFileInChunks(connection.selectedId, file, handleProgressUpdate);
+            setSendLoading(false);
+            message.info("File sent successfully");
         } catch (err) {
-            await setSendLoading(false);
+            setSendLoading(false);
             console.log(err);
             message.error("Error when sending file");
         }
     };
+
+    const handleProgressUpdate = (progress: number) => {
+        setSendProgress(progress);
+    }
+
+    function getItem(e: string, e1: string, arg2: null): any {
+        throw new Error('Function not implemented.');
+    }
 
     return (
         <Row justify={"center"} align={"top"}>
@@ -92,8 +74,8 @@ export const App: React.FC = (): ReactElement => {
                         <Space direction="horizontal">
                             <div>ID: {peer.id}</div>
                             <Button icon={<CopyOutlined />} onClick={async () => {
-                                await navigator.clipboard.writeText(peer.id || "");
-                                message.info("Copied: " + peer.id);
+                                await navigator.clipboard.writeText(peer.id || "")
+                                message.info("Copied: " + peer.id)
                             }} />
                             <Button danger onClick={handleStopSession}>Stop</Button>
                         </Space>
@@ -127,12 +109,13 @@ export const App: React.FC = (): ReactElement => {
                             <Upload fileList={fileList}
                                 maxCount={1}
                                 onRemove={() => setFileList([])}
-                                beforeUpload={(file: any) => {
+                                beforeUpload={(file) => {
                                     setFileList([file]);
                                     return false;
                                 }}>
                                 <Button icon={<UploadOutlined />}>Select File</Button>
                             </Upload>
+                            <Progress percent={sendProgress} status={sendLoading ? 'active' : undefined} />
                             <Button
                                 type="primary"
                                 onClick={handleUpload}
@@ -143,15 +126,11 @@ export const App: React.FC = (): ReactElement => {
                                 {sendLoading ? 'Sending' : 'Send'}
                             </Button>
                         </Card>
-                        <div>
-                            <Progress percent={uploadProgress} status="active" />
-                            <Progress percent={downloadProgress} status="active" />
-                        </div>
                     </div>
                 </Card>
             </Col>
         </Row>
-    );
-};
+    )
+}
 
 export default App;
