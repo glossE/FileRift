@@ -1,5 +1,3 @@
-// App.tsx
-
 import React, { useState } from 'react';
 import { Button, Card, Col, Input, Menu, message, Progress, Row, Space, Typography, Upload, UploadFile } from "antd";
 import { CopyOutlined, UploadOutlined } from "@ant-design/icons";
@@ -16,7 +14,7 @@ export const App: React.FC = () => {
     const peer = useAppSelector((state) => state.peer);
     const connection = useAppSelector((state) => state.connection);
     const dispatch = useAppDispatch();
-    const [fileList, setFileList] = useAsyncState([] as UploadFile[]);
+    const [fileList, setFileList] = useAsyncState([]);
     const [sendLoading, setSendLoading] = useState<boolean>(false);
     const [sendProgress, setSendProgress] = useState<number>(0);
 
@@ -44,40 +42,37 @@ export const App: React.FC = () => {
         }
         try {
             setSendLoading(true);
-            let file = fileList[0]; // Ensure fileList is typed to contain File objects
+            // Get the original File object from UploadFile
+            let file = fileList[0].originFileObj as File;
             let blob = new Blob([file], {type: file.type});
-    
-            // Step 1: Use sendFileInChunks to show progress of the upload
-            await PeerConnection.sendFileInChunks(connection.selectedId, file, (progress) => {
-                setSendProgress(progress);
-            });
-    
-            // Step 2: Use sendConnection to send the actual data to the other peer
+
+            // Simulate progress update
+            const interval = setInterval(() => {
+                setSendProgress((prevProgress) => {
+                    const nextProgress = prevProgress + 10; // Increment progress by 10%
+                    return nextProgress > 100 ? 100 : nextProgress; // Ensure progress doesn't exceed 100%
+                });
+            }, 500); // Simulate progress update every 500ms
+
+            // Perform actual file transfer logic
             await PeerConnection.sendConnection(connection.selectedId, {
                 dataType: DataType.FILE,
                 file: blob,
                 fileName: file.name,
                 fileType: file.type
             });
-    
-            setSendLoading(false);
+
+            // Clear interval and update loading state
+            clearInterval(interval);
+            setSendProgress(100); // Set progress to 100% once file transfer is complete
+            setSendLoading(false); // Set loading state to false
             message.info("Send file successfully");
         } catch (err) {
-            setSendLoading(false);
+            setSendLoading(false); // Set loading state to false in case of error
             console.log(err);
             message.error("Error when sending file");
         }
     };
-    
-    
-    
-    const handleProgressUpdate: ProgressCallback = (progress) => {
-        setSendProgress(progress);
-    };
-
-    function getItem(e: string, e1: string, arg2: null): any {
-        throw new Error('Function not implemented.');
-    }
 
     return (
         <Row justify={"center"} align={"top"}>
@@ -153,7 +148,6 @@ export const App: React.FC = () => {
             </Col>
         </Row>
     )
-    
 }
 
 export default App;

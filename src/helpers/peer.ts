@@ -138,6 +138,7 @@ export const PeerConnection = {
             })
         }
     },
+    /*
     sendFileInChunks: async (id: string, file: File | undefined, progressCallback: (progress: number) => void): Promise<void> => {
         if (!file) {
             throw new Error("File is undefined");
@@ -179,7 +180,7 @@ export const PeerConnection = {
         sendChunk(0);
     }
     
-
+*/
     
     
 }
