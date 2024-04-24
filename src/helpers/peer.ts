@@ -1,16 +1,11 @@
-// peer.ts
+import Peer, {DataConnection} from "peerjs";
+import {message} from "antd";
 
-import Peer, { DataConnection } from "peerjs";
-import { message } from "antd";
-
-
-type ProgressCallback = (progress: number) => void;
-const receivedChunksMap = new Map<string, { chunks: ArrayBuffer[], totalSize: number }>();
 export enum DataType {
     FILE = 'FILE',
     OTHER = 'OTHER'
-}
 
+}
 export interface Data {
     dataType: DataType
     file?: Blob
@@ -19,17 +14,10 @@ export interface Data {
     message?: string
 }
 
-interface CustomDataConnection extends DataConnection {
-    sendFileInChunks: (file: Blob, onProgressUpdate: (progress: number) => void) => Promise<void>;
-}
-
-
-
 let peer: Peer | undefined
-let connectionMap: Map<string, CustomDataConnection> = new Map<string, CustomDataConnection>()
+let connectionMap: Map<string, DataConnection> = new Map<string, DataConnection>()
 
 export const PeerConnection = {
-    
     getPeer: () => peer,
     startPeerSession: () => new Promise<string>((resolve, reject) => {
         try {
@@ -68,15 +56,15 @@ export const PeerConnection = {
             return
         }
         try {
-            let conn = peer.connect(id, { reliable: true }) as CustomDataConnection;
+            let conn = peer.connect(id, {reliable: true})
             if (!conn) {
                 reject(new Error("Connection can't be established"))
             } else {
-                conn.on('open', function () {
+                conn.on('open', function() {
                     console.log("Connect to: " + id)
                     connectionMap.set(id, conn)
                     resolve()
-                }).on('error', function (err) {
+                }).on('error', function(err) {
                     console.log(err)
                     reject(err)
                 })
@@ -85,11 +73,11 @@ export const PeerConnection = {
             reject(err)
         }
     }),
-    onIncomingConnection: (callback: (conn: CustomDataConnection) => void) => {
+    onIncomingConnection: (callback: (conn: DataConnection) => void) => {
         peer?.on('connection', function (conn) {
             console.log("Incoming connection: " + conn.peer)
-            connectionMap.set(conn.peer, conn as CustomDataConnection);
-            callback(conn as CustomDataConnection);
+            connectionMap.set(conn.peer, conn)
+            callback(conn)
         });
     },
     onConnectionDisconnected: (id: string, callback: () => void) => {
@@ -137,50 +125,6 @@ export const PeerConnection = {
                 callback(data)
             })
         }
-    },
-    /*
-    sendFileInChunks: async (id: string, file: File | undefined, progressCallback: (progress: number) => void): Promise<void> => {
-        if (!file) {
-            throw new Error("File is undefined");
-        }
-    
-        const connection = connectionMap.get(id);
-        if (!connection) {
-            throw new Error("Connection does not exist");
-        }
-    
-        const chunkSize = 64 * 1024;
-        let offset = 0;
-        const totalChunks = Math.ceil(file.size / chunkSize);
-    
-        const sendChunk = (chunkIndex: number) => {
-            const slice = file.slice(offset, offset + chunkSize);
-            const reader = new FileReader();
-    
-            reader.onload = (event) => {
-                if (!event || !event.target || !(event.target instanceof FileReader)) {
-                    throw new Error("Failed to read file slice");
-                }
-    
-                const arrayBuffer = event.target.result as ArrayBuffer;
-                connection.send({ chunkIndex, totalChunks, data: arrayBuffer });
-                offset += arrayBuffer.byteLength;
-    
-                const progress = Math.min(100, Math.round((offset / file.size) * 100));
-                progressCallback(progress);
-    
-                if (offset < file.size) {
-                    sendChunk(chunkIndex + 1);
-                }
-            };
-    
-            reader.readAsArrayBuffer(slice);
-        };
-    
-        sendChunk(0);
     }
-    
-*/
-    
-    
+
 }
