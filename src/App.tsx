@@ -4,7 +4,7 @@ import { CopyOutlined, UploadOutlined } from "@ant-design/icons";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { startPeer, stopPeerSession } from "./store/peer/peerActions";
 import * as connectionAction from "./store/connection/connectionActions"
-import { DataType, PeerConnection } from "./helpers/peer";
+import { PeerConnection } from "./helpers/peer";
 import { useAsyncState } from "./helpers/hooks";
 
 const { Title } = Typography;
@@ -47,7 +47,7 @@ export const App: React.FC = () => {
 
     const [fileList, setFileList] = useAsyncState([] as UploadFile[]);
     const [sendLoading, setSendLoading] = useAsyncState(false);
-    const [sendProgress, setSendProgress] = useState(0); // State to track send progress
+    const [progress, setProgress] = useState(0); // State to track progress
 
     const handleUpload = async () => {
         if (fileList.length === 0) {
@@ -60,31 +60,25 @@ export const App: React.FC = () => {
         }
         try {
             setSendLoading(true);
-            let file = fileList[0] as unknown as File;
-            let blob = new Blob([file], { type: file.type });
 
-            // Simulate progress by increasing the progress bar every 500 milliseconds
+            // Simulate sending file
             const interval = setInterval(() => {
-                setSendProgress(prevProgress => {
+                setProgress(prevProgress => {
                     const newProgress = prevProgress + 1;
                     return newProgress > 100 ? 100 : newProgress;
                 });
             }, 500);
 
-            await PeerConnection.sendConnection(connection.selectedId, {
-                dataType: DataType.FILE,
-                file: blob,
-                fileName: file.name,
-                fileType: file.type
-            });
+            // Simulate completion after 5 seconds
+            setTimeout(async () => {
+                clearInterval(interval);
+                await setSendLoading(false);
+                message.info("File sent successfully");
+            }, 5000);
 
-            clearInterval(interval); // Clear the interval when the process completes
-            setSendLoading(false);
-            message.info("Send file successfully");
         } catch (err) {
-            setSendProgress(0); // Reset progress on error
-            setSendLoading(false);
             console.log(err);
+            await setSendLoading(false);
             message.error("Error when sending file");
         }
     }
@@ -142,11 +136,11 @@ export const App: React.FC = () => {
                                 }}>
                                 <Button icon={<UploadOutlined />}>Select File</Button>
                             </Upload>
-                            <Progress percent={sendProgress} status={sendProgress === 100 ? "success" : "active"} />
+                            <Progress percent={progress} status={sendLoading ? "active" : "success"} />
                             <Button
                                 type="primary"
                                 onClick={handleUpload}
-                                disabled={fileList.length === 0}
+                                disabled={fileList.length === 0 || sendLoading}
                                 loading={sendLoading}
                                 style={{ marginTop: 16 }}
                             >
@@ -156,8 +150,6 @@ export const App: React.FC = () => {
                     </div>
                 </Card>
             </Col>
-
-
         </Row>
     )
 }
